@@ -37,16 +37,15 @@ RUN set -eux; \
 	gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4; \
 	gpg --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu; \
 	gpgconf --kill all; \
-	rm -f "$GNUPGHOME" /usr/local/bin/gosu.asc; \
+	rm -rf "$GNUPGHOME" /usr/local/bin/gosu.asc; \
 	apk del --no-network .gosu-fetch; \
 	chmod +x /usr/local/bin/gosu; \
 	gosu --version; \
 	gosu nobody true
 
-ENV REDIS_VERSION=8.0-m01
-ENV REDIS_DOWNLOAD_URL=https://github.com/redis/redis/archive/refs/tags/8.0-m01.tar.gz
-ENV REDIS_DOWNLOAD_SHA=4c77c2218747505c50c43a45d12a067a3631a26d9397929da180e183b03e862c
-
+ENV REDIS_DOWNLOAD_URL=https://github.com/redis/redis/archive/refs/tags/8.0-m02.tar.gz
+ENV REDIS_DOWNLOAD_SHA=c70d565c5403c5e8392942810e980b23478b82218f6069656ea51bc8978176c1
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
 RUN set -eux; \
 	\
 	apk add --no-cache --virtual .build-deps \
@@ -57,6 +56,7 @@ RUN set -eux; \
 		make \
 		musl-dev \
 		openssl-dev \
+        g++ \
 	; \
   \
 	arch="$(dpkg --print-architecture | awk -F- '{ print $NF }')"; \
@@ -67,26 +67,42 @@ RUN set -eux; \
 	esac; \
 	if [ "$BUILD_WITH_MODULES" = "yes" ]; then \
     apk add --no-cache --virtual .module-build-deps \
-      git \
+      autoconf \
+      automake \
+      bash \
+      bsd-compat-headers \
+      build-base \
+      cargo \
+      clang \
+      clang18-libclang \
       cmake \
       curl \
-      python3 \
+      g++ \
+      git \
+      libffi-dev \
+      libgcc \
+      libtool \
+      openssh \
+      openssl  \
+      py-virtualenv \
+      py3-cryptography \
       py3-pip \
       py3-virtualenv \
+      python3 \
       python3-dev \
-      unzip \
       rsync \
-      clang \
-      automake \
-      autoconf \
-      libtool \
-      g++ \
-      libgcc \
-			;\
+      tar \
+      unzip \
+      which \
+      xsimd \
+      xz \
+	;\
 	fi; \
 	\
-	wget -O redis.tar.gz "$REDIS_DOWNLOAD_URL"; \
-	echo "$REDIS_DOWNLOAD_SHA *redis.tar.gz" | sha256sum -c -; \
+#	install required python packages for RedisJSON module
+	pip install -q --upgrade setuptools &&  pip install -q --upgrade pip && pip install -q addict toml jinja2 ramp-packer ;\
+ 	wget -O redis.tar.gz "$REDIS_DOWNLOAD_URL"; \
+    echo "$REDIS_DOWNLOAD_SHA *redis.tar.gz" | sha256sum -c -; \
 	mkdir -p /usr/src/redis; \
 	tar -xzf redis.tar.gz -C /usr/src/redis --strip-components=1; \
 	rm redis.tar.gz; \
@@ -117,6 +133,11 @@ RUN set -eux; \
 	grep -F "cd jemalloc && ./configure $extraJemallocConfigureFlags " /usr/src/redis/deps/Makefile; \
 	\
 	export BUILD_TLS=yes; \
+    if [ "$BUILD_WITH_MODULES" = "yes" ]; then \
+        make -C /usr/src/redis/modules/redisjson get_source; \
+        sed -i 's/^RUST_FLAGS=$/RUST_FLAGS += -C target-feature=-crt-static/' /usr/src/redis/modules/redisjson/src/Makefile ; \
+        grep -E 'RUST_FLAGS' /usr/src/redis/modules/redisjson/src/Makefile; \
+    fi; \
 	make -C /usr/src/redis -j "$(nproc)" all; \
 	make -C /usr/src/redis install; \
 	\
@@ -141,7 +162,12 @@ RUN set -eux; \
 			| awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
 	)"; \
 	apk add --no-network --virtual .redis-rundeps $runDeps; \
-	apk del --no-network .build-deps; \
+    if [ "$BUILD_WITH_MODULES" = "yes" ]; then \
+    	apk del --no-network .module-build-deps; \
+    fi; \
+    apk del --no-network .build-deps; \
+    apk --purge del apk-tools ; \
+    rm -fr ~/.cache/pip*  rm -f /sbin/apk && rm -rf /etc/apk && rm -rf /lib/apk && rm -rf /usr/share/apk && rm -rf /var/lib/apk && rm -rf /usr/lib/python*; \
 	\
 	redis-cli --version; \
 	redis-server --version;

@@ -45,6 +45,9 @@ runs:
           linux/arm/v5)
             plaform_name="arm-v5"
             ;;
+          linux/arm/v6)
+            plaform_name="arm-v6"
+            ;;
           linux/arm/v7)
             plaform_name="arm-v7"
             ;;
@@ -56,6 +59,9 @@ runs:
             ;;
           linux/ppc64le)
             plaform_name="ppc64le"
+            ;;
+          linux/riscv64)
+            plaform_name="riscv64"
             ;;
           linux/s390x)
             plaform_name="s390x"
@@ -100,31 +106,31 @@ runs:
     - name: Upload image
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ steps.platform.outputs.display_name }}-docker-image.tar
+        name: ${{ steps.platform.outputs.display_name }}-${{ inputs.distribution }}-docker-image.tar
         path: /tmp/image-${{ steps.platform.outputs.display_name }}.tar
         retention-days: 45
 
     - name: Run container
       shell: bash
-      if: ${{ contains(fromJSON('["amd64", "arm64", "i386"]'), steps.platform.outputs.display_name) }}
+      if: ${{ contains(fromJSON('["amd64", "i386"]'), steps.platform.outputs.display_name) }}
       run: |
         docker run -d --name sanity-test-${{ steps.platform.outputs.display_name }} ${{ github.sha }}:${{ steps.platform.outputs.display_name }}
     
     - name: Container Logs
-      if: ${{ contains(fromJSON('["amd64", "arm64", "i386"]'), steps.platform.outputs.display_name) }}
+      if: ${{ contains(fromJSON('["amd64", "i386"]'), steps.platform.outputs.display_name) }}
       shell: bash
       run: |
         docker logs sanity-test-${{ steps.platform.outputs.display_name }}
 
     - name: Sanity Tests
-      if: ${{ contains(fromJSON('["amd64", "arm64", "i386"]'), steps.platform.outputs.display_name) }}
+      if: ${{ contains(fromJSON('["amd64", "i386"]'), steps.platform.outputs.display_name) }}
       shell: bash
       run: |
         docker exec sanity-test-${{ steps.platform.outputs.display_name }} redis-cli ping
         docker exec sanity-test-${{ steps.platform.outputs.display_name }} redis-cli info server
   
     - name: Verify installed modules
-      if: ${{ contains(fromJSON('["amd64", "arm64",]'), steps.platform.outputs.display_name) }}
+      if: ${{ contains(fromJSON('["amd64"]'), steps.platform.outputs.display_name) }}
       shell: bash
       run: |
         modules=$(docker exec sanity-test-${{ steps.platform.outputs.display_name }} redis-cli module list)
@@ -144,7 +150,7 @@ runs:
         fi
   
     - name: Test RedisBloom
-      if: ${{ contains(fromJSON('["amd64", "arm64"]'), steps.platform.outputs.display_name) }}
+      if: ${{ contains(fromJSON('["amd64"]'), steps.platform.outputs.display_name) }}
       shell: bash
       run: |
         docker exec sanity-test-${{ steps.platform.outputs.display_name }} redis-cli BF.ADD popular_keys "redis:hash"
@@ -154,7 +160,7 @@ runs:
         echo "RedisBloom test passed successfully"
       
     - name: Test RediSearch
-      if: ${{ contains(fromJSON('["amd64", "arm64"]'), steps.platform.outputs.display_name) }}
+      if: ${{ contains(fromJSON('["amd64"]'), steps.platform.outputs.display_name) }}
       shell: bash
       run: |
         docker exec sanity-test-${{ steps.platform.outputs.display_name }} redis-cli FT.CREATE redis_commands ON HASH PREFIX 1 cmd: SCHEMA name TEXT SORTABLE description TEXT
@@ -169,7 +175,7 @@ runs:
         fi
 
     - name: Test RedisTimeSeries
-      if: ${{ contains(fromJSON('["amd64", "arm64"]'), steps.platform.outputs.display_name) }}
+      if: ${{ contains(fromJSON('["amd64"]'), steps.platform.outputs.display_name) }}
       shell: bash
       run: |
         docker exec sanity-test-${{ steps.platform.outputs.display_name }} redis-cli TS.CREATE redis:cpu:usage RETENTION 86400
@@ -185,7 +191,7 @@ runs:
         fi
 
     - name: Test ReJSON
-      if: ${{ contains(fromJSON('["amd64", "arm64"]'), steps.platform.outputs.display_name) }}
+      if: ${{ contains(fromJSON('["amd64"]'), steps.platform.outputs.display_name) }}
       shell: bash
       run: |
         docker exec sanity-test-${{ steps.platform.outputs.display_name }} redis-cli JSON.SET redis:config $ '{"maxmemory":"2gb","maxmemory-policy":"allkeys-lru"}'
@@ -200,7 +206,7 @@ runs:
 
     - name: Push image
       uses: docker/build-push-action@v6
-      if: ${{ inputs.publish_image == 'true' && contains(fromJSON('["amd64","arm64"]'), steps.platform.outputs.display_name) }}
+      if: ${{ inputs.publish_image == 'true' && contains(fromJSON('["amd64"]'), steps.platform.outputs.display_name) }}
       with:
         context: ${{ inputs.distribution }}
         push: true
