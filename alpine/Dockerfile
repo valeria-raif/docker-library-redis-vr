@@ -45,7 +45,6 @@ RUN set -eux; \
 
 ENV REDIS_DOWNLOAD_URL=https://github.com/redis/redis/archive/refs/tags/8.0-m02.tar.gz
 ENV REDIS_DOWNLOAD_SHA=c70d565c5403c5e8392942810e980b23478b82218f6069656ea51bc8978176c1
-ENV PIP_BREAK_SYSTEM_PACKAGES=1
 RUN set -eux; \
 	\
 	apk add --no-cache --virtual .build-deps \
@@ -100,7 +99,7 @@ RUN set -eux; \
 	fi; \
 	\
 #	install required python packages for RedisJSON module
-	pip install -q --upgrade setuptools &&  pip install -q --upgrade pip && pip install -q addict toml jinja2 ramp-packer ;\
+	pip install -q --upgrade setuptools &&  pip install -q --upgrade pip && PIP_BREAK_SYSTEM_PACKAGES=1 pip install -q addict toml jinja2 ramp-packer ;\
  	wget -O redis.tar.gz "$REDIS_DOWNLOAD_URL"; \
     echo "$REDIS_DOWNLOAD_SHA *redis.tar.gz" | sha256sum -c -; \
 	mkdir -p /usr/src/redis; \
