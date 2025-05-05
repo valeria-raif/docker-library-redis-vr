@@ -14,8 +14,7 @@ RUN set -eux; \
 	; \
 	rm -rf /var/lib/apt/lists/*
 
-ENV REDIS_DOWNLOAD_URL=https://github.com/redis/redis/archive/refs/tags/8.0.0.tar.gz
-ENV REDIS_DOWNLOAD_SHA=6d1b428d289426b68cff933d61f2d5c0a44a316f17236c51fbb33bc9e5c5a385
+ENV REDIS_DOWNLOAD_URL=https://github.com/redis/redis/archive/refs/heads/unstable.tar.gz
 RUN set -eux; \
 	\
 	savedAptMark="$(apt-mark showmanual)"; \
@@ -23,6 +22,7 @@ RUN set -eux; \
 	apt-get install -y --no-install-recommends \
 		ca-certificates \
 		wget \
+        git \
 		dpkg-dev \
 		gcc \
 		g++ \
@@ -56,7 +56,6 @@ RUN set -eux; \
 	rm -rf /var/lib/apt/lists/*; \
 	\
 	wget -O redis.tar.gz "$REDIS_DOWNLOAD_URL"; \
-	echo "$REDIS_DOWNLOAD_SHA *redis.tar.gz" | sha256sum -c -; \
 	mkdir -p /usr/src/redis; \
 	tar -xzf redis.tar.gz -C /usr/src/redis --strip-components=1; \
 	rm redis.tar.gz; \
