@@ -1,9 +1,6 @@
-name: Build and Test
+name: Build and Test Unstable
 on:
-  pull_request:
-    branches:
-      - master
-      - release/*
+  workflow_dispatch:
 
 jobs:
   build-and-test:
