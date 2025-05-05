@@ -204,12 +204,12 @@ runs:
           exit 1
         fi
 
-    - name: Push image
-      uses: docker/build-push-action@v6
-      if: ${{ inputs.publish_image == 'true' && contains(fromJSON('["amd64"]'), steps.platform.outputs.display_name) }}
-      with:
-        context: ${{ inputs.distribution }}
-        push: true
-        tags: ${{ inputs.registry_repository }}:${{ github.sha }}-${{ inputs.distribution }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+#    - name: Push image
+#      uses: docker/build-push-action@v6
+#      if: ${{ inputs.publish_image == 'true' && contains(fromJSON('["amd64"]'), steps.platform.outputs.display_name) }}
+#      with:
+#        context: ${{ inputs.distribution }}
+#        push: true
+#        tags: ${{ inputs.registry_repository }}:${{ github.sha }}-${{ inputs.distribution }}
+#        cache-from: type=gha
+#        cache-to: type=gha,mode=max
