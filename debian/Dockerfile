@@ -60,6 +60,14 @@ RUN set -eux; \
 	tar -xzf redis.tar.gz -C /usr/src/redis --strip-components=1; \
 	rm redis.tar.gz; \
 	\
+	# Update module versions to master
+	if [ "$BUILD_WITH_MODULES" = "yes" ]; then \
+		sed -i 's/^MODULE_VERSION = .*/MODULE_VERSION = master/' /usr/src/redis/modules/redisbloom/Makefile; \
+		sed -i 's/^MODULE_VERSION = .*/MODULE_VERSION = master/' /usr/src/redis/modules/redisjson/Makefile; \
+		sed -i 's/^MODULE_VERSION = .*/MODULE_VERSION = master/' /usr/src/redis/modules/redisearch/Makefile; \
+		sed -i 's/^MODULE_VERSION = .*/MODULE_VERSION = master/' /usr/src/redis/modules/redistimeseries/Makefile; \
+	fi; \
+	\
 # disable Redis protected mode [1] as it is unnecessary in context of Docker
 # (ports are not automatically exposed when running inside Docker, but rather explicitly by specifying -p / -P)
 # [1]: https://github.com/redis/redis/commit/edd4d555df57dc84265fdfb4ef59a4678832f6da
