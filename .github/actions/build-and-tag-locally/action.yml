@@ -204,38 +204,6 @@ runs:
           exit 1
         fi
 
-    - name: Analyze build logs on failure
-      if: failure()
-      shell: bash
-      run: |
-        echo "## Build Failure Analysis" >> $GITHUB_STEP_SUMMARY
-        
-        # Get the build logs from Docker
-        docker logs $(docker ps -a --filter "ancestor=${{ github.sha }}:${{ steps.platform.outputs.display_name }}" --format "{{.ID}}" | head -n 1) > build_logs.txt
-        
-        # Check for common failure patterns
-        if grep -q "redisearch" build_logs.txt && grep -q "Error" build_logs.txt; then
-          echo "### RedisSearch Module Build Failed" >> $GITHUB_STEP_SUMMARY
-          echo "The RedisSearch module failed to build. Check the logs for details." >> $GITHUB_STEP_SUMMARY
-          grep -A 10 -B 5 "redisearch.*Error" build_logs.txt | tail -n 15 >> $GITHUB_STEP_SUMMARY
-        elif grep -q "redisjson" build_logs.txt && grep -q "Error" build_logs.txt; then
-          echo "### RedisJSON Module Build Failed" >> $GITHUB_STEP_SUMMARY
-          echo "The RedisJSON module failed to build. Check the logs for details." >> $GITHUB_STEP_SUMMARY
-          grep -A 10 -B 5 "redisjson.*Error" build_logs.txt | tail -n 15 >> $GITHUB_STEP_SUMMARY
-        elif grep -q "redisbloom" build_logs.txt && grep -q "Error" build_logs.txt; then
-          echo "### RedisBloom Module Build Failed" >> $GITHUB_STEP_SUMMARY
-          echo "The RedisBloom module failed to build. Check the logs for details." >> $GITHUB_STEP_SUMMARY
-          grep -A 10 -B 5 "redisbloom.*Error" build_logs.txt | tail -n 15 >> $GITHUB_STEP_SUMMARY
-        elif grep -q "redistimeseries" build_logs.txt && grep -q "Error" build_logs.txt; then
-          echo "### RedisTimeSeries Module Build Failed" >> $GITHUB_STEP_SUMMARY
-          echo "The RedisTimeSeries module failed to build. Check the logs for details." >> $GITHUB_STEP_SUMMARY
-          grep -A 10 -B 5 "redistimeseries.*Error" build_logs.txt | tail -n 15 >> $GITHUB_STEP_SUMMARY
-        else
-          echo "### Unknown Build Failure" >> $GITHUB_STEP_SUMMARY
-          echo "The build failed for an unknown reason. Check the logs for details." >> $GITHUB_STEP_SUMMARY
-          tail -n 20 build_logs.txt >> $GITHUB_STEP_SUMMARY
-        fi
-
 #    - name: Push image
 #      uses: docker/build-push-action@v6
 #      if: ${{ inputs.publish_image == 'true' && contains(fromJSON('["amd64"]'), steps.platform.outputs.display_name) }}
