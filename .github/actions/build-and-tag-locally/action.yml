@@ -88,6 +88,7 @@ runs:
         password: ${{ inputs.registry_password }}
 
     - name: Build
+      id: build
       uses: docker/build-push-action@v6
       with:
         context: ${{ inputs.distribution }}
@@ -97,6 +98,59 @@ runs:
         tags: ${{ github.sha }}:${{ steps.platform.outputs.display_name }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
+        # Keep normal output visible in the terminal
+        # No redirection here
+      env:
+        BUILDKIT_PROGRESS: plain
+
+    - name: Capture build logs
+      shell: bash
+      if: always()
+      run: |
+        mkdir -p /tmp/build-logs
+        
+        # Get docker build logs - this doesn't affect what was already shown in the terminal
+        # It just captures the same information for the artifact
+        echo "Capturing build logs for ${{ inputs.distribution }} on ${{ inputs.platform }}"
+        
+        # Get docker history for the built image
+        echo "Getting image history..."
+        docker history ${{ github.sha }}:${{ steps.platform.outputs.display_name }} > /tmp/build-logs/image-history.log 2>&1 || echo "Failed to get image history"
+        
+        # Get docker inspect output
+        echo "Getting image details..."
+        docker inspect ${{ github.sha }}:${{ steps.platform.outputs.display_name }} > /tmp/build-logs/image-inspect.json 2>&1 || echo "Failed to inspect image"
+        
+        # Get docker build cache info
+        echo "Getting build cache info..."
+        docker buildx du > /tmp/build-logs/buildx-du.log 2>&1 || echo "Failed to get build cache info"
+        
+        # Get system info
+        echo "Getting system info..."
+        uname -a > /tmp/build-logs/system-info.log 2>&1
+        docker info > /tmp/build-logs/docker-info.log 2>&1
+        
+        # Create a summary file
+        echo "Creating build summary..."
+        {
+          echo "Build summary for ${{ inputs.distribution }} on ${{ inputs.platform }}"
+          echo "Date: $(date)"
+          echo "GitHub SHA: ${{ github.sha }}"
+          echo "Platform: ${{ steps.platform.outputs.display_name }}"
+          echo "Distribution: ${{ inputs.distribution }}"
+          echo "Build status: ${{ steps.build.outcome }}"
+        } > /tmp/build-logs/summary.txt
+        
+        echo "Log capture complete"
+
+    - name: Upload build logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-logs-${{ steps.platform.outputs.display_name }}-${{ inputs.distribution }}
+        path: /tmp/build-logs/
+        retention-days: 30
+        if-no-files-found: warn
 
     - name: Save image
       shell: bash
