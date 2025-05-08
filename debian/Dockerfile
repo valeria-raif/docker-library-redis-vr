@@ -64,6 +64,7 @@ RUN set -eux; \
 	if [ "$BUILD_WITH_MODULES" = "yes" ]; then \
 		sed -i 's/^MODULE_VERSION = .*/MODULE_VERSION = master/' /usr/src/redis/modules/redisbloom/Makefile; \
 		sed -i 's/^MODULE_VERSION = .*/MODULE_VERSION = master/' /usr/src/redis/modules/redisjson/Makefile; \
+		sed -i 's/^MODULE_VERSION = .*/MODULE_VERSION = master/' /usr/src/redis/modules/redisearch/Makefile; \
 		sed -i 's/^MODULE_VERSION = .*/MODULE_VERSION = master/' /usr/src/redis/modules/redistimeseries/Makefile; \
 	fi; \
 	\
