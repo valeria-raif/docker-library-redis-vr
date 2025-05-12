@@ -74,7 +74,7 @@ RUN set -eux; \
 	tar -xzf redis.tar.gz -C /usr/src/redis --strip-components=1; \
 	rm redis.tar.gz; \
 	\
-	# Update module versions to master
+	# Update module versions to master - will be removed once modules are updated to latest version on redis unstable. RED-159986
 	if [ "$BUILD_WITH_MODULES" = "yes" ]; then \
 		sed -i 's/^MODULE_VERSION = .*/MODULE_VERSION = master/' /usr/src/redis/modules/redisbloom/Makefile; \
 		sed -i 's/^MODULE_VERSION = .*/MODULE_VERSION = master/' /usr/src/redis/modules/redisjson/Makefile; \
