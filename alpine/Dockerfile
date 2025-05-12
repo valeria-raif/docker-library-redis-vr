@@ -26,7 +26,7 @@ RUN set -eux; \
 		musl-dev \
 		openssl-dev \
 		g++ \
-        git; \
+		git; \
 	\
 	arch="$(dpkg --print-architecture | awk -F- '{ print $NF }')"; \
 	case "$arch" in \

@@ -22,7 +22,7 @@ RUN set -eux; \
 	apt-get install -y --no-install-recommends \
 		ca-certificates \
 		wget \
-        git \
+		git \
 		dpkg-dev \
 		gcc \
 		g++ \
