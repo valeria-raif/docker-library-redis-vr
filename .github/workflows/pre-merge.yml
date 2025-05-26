@@ -3,8 +3,6 @@ on:
   pull_request:
     branches:
       - unstable
-  schedule:
-    - cron: '0 1 * * *'
 
 jobs:
   build-and-test:
@@ -38,6 +36,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: unstable
       - uses: ./.github/actions/build-and-tag-locally
         with:
           distribution: ${{ matrix.distribution }}
