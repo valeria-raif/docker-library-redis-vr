@@ -1,0 +1,22 @@
+name: Nightly Unstable Build and Package
+
+on:
+  schedule:
+    - cron: '0 1 * * *'  # Run every day at 1:00 AM UTC
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  trigger-unstable-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: unstable
+          
+      - name: Trigger pre-merge workflow
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: pre-merge.yml
+          ref: unstable
+          token: ${{ secrets.GITHUB_TOKEN }}
